@@ -1,8 +1,22 @@
 <?php
+
+//start session
+session_start();
+
 //connect to database
 include 'dbconnect.php';
-$user_id=25;
-$site_id = 38;
+
+//salt for password
+$salt = date('Ymd');
+
+//get user id from url
+$user_id = $_GET['user_id'] ? $_GET ['user_id']-$salt : 14;
+//get site id from url
+$site_id = $_GET['site_id'] ? $_GET ['site_id']-$salt : 29;
+
+//save user id and site id to session
+$_SESSION['user_id'] = $user_id;
+$_SESSION['site_id'] = $site_id;
 
 //get user name
 $sql = "SELECT `name` FROM users WHERE id = $user_id";
@@ -47,15 +61,14 @@ $guards = mysqli_fetch_assoc($result);
 mysqli_free_result($result);
 
 
-//Patrols that have elapsed today
-$sql = "SELECT COUNT(*) FROM patrols WHERE site_id = $site_id AND end >= CURRENT_TIME";
+//Patrols where start time is less than current time and end time is greater than current time
+$sql = "SELECT COUNT(*) FROM patrols WHERE site_id = $site_id AND start < CURRENT_TIME AND end > CURRENT_TIME";
 //run query
 $result = mysqli_query($conn, $sql);
 //fetch result as a string
 $elapsed = mysqli_fetch_assoc($result);
 //free result from memory
 mysqli_free_result($result);
-
 
 
 //Total patrols for Site
@@ -124,7 +137,7 @@ mysqli_free_result($result);
 
 
 
-//Tasks Summary 
+//Tasks Summary
 
 
 //Count completed tasks
@@ -156,7 +169,7 @@ $tasks = mysqli_fetch_assoc($result);
 mysqli_free_result($result);
 
 //fetch all tasks as object
-$sql = "SELECT * FROM tasks WHERE site_id = $site_id";
+$sql = "SELECT * FROM tasks WHERE site_id = $site_id ORDER BY id DESC LIMIT 5";
 //run query
 $result = mysqli_query($conn, $sql);
 //fetch result as a string
@@ -170,7 +183,7 @@ mysqli_free_result($result);
 //Incidents Summary
 
 //get all incidents for site as object
-$sql = "SELECT * FROM incidents WHERE site_id = $site_id";
+$sql = "SELECT * FROM incidents WHERE site_id = $site_id ORDER BY id DESC LIMIT 5";
 //run query
 $result = mysqli_query($conn, $sql);
 //fetch result as a string
@@ -195,7 +208,7 @@ $sql = "SELECT `id`, `name` FROM sites";
 $result = mysqli_query($conn, $sql);
 //fetch result as a string
 $allsites = array();
-while($row = mysqli_fetch_assoc($result)){
+while($row = mysqli_fetch_assoc($result)) {
     $allsites[$row['id']] = $row['name'];
 }
 //free result from memory
@@ -207,7 +220,7 @@ $sql = "SELECT `id`, `name` FROM guards";
 $result = mysqli_query($conn, $sql);
 //fetch result as a string
 $allguards = array();
-while($row = mysqli_fetch_assoc($result)){
+while($row = mysqli_fetch_assoc($result)) {
     $allguards[$row['id']] = $row['name'];
 }
 
@@ -220,7 +233,7 @@ $sql = "SELECT `id`, `name` FROM tags";
 $result = mysqli_query($conn, $sql);
 //fetch result as a string
 $alltags = array();
-while($row = mysqli_fetch_assoc($result)){
+while($row = mysqli_fetch_assoc($result)) {
     $alltags[$row['id']] = $row['name'];
 }
 
@@ -251,7 +264,7 @@ mysqli_free_result($result);
 //Miscellaneous Calculations
 
 //Get average for checkpoints
-$average =  implode('',$scanned)/implode('',$checkpoint) * 100;
+$average =  implode('', $scanned)/implode('', $checkpoint) * 100;
 
 
 //Cartegories
@@ -261,7 +274,7 @@ $sitename = rtrim(implode('', $site));
 
 //upcoming
 
-$difference = implode('',$checkpoint) - implode('',$scanned);
+$difference = implode('', $checkpoint) - implode('', $scanned);
 
 //if difference is negative set upcoming to 0 using ternary operator
 $upcoming = $difference < 0 ? 0 : $difference;
@@ -275,6 +288,3 @@ $data = json_decode($response, true);
 
 //get logo url
 $logo =$data['imageUrls'][1];
-
-
-?>
