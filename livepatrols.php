@@ -40,6 +40,20 @@ $hours = mysqli_fetch_assoc($result);
 //free result from memory
 mysqli_free_result($result);
 
+//Patrol Points
+$sql = "SELECT * FROM tags WHERE site_id = $site_id";
+//run query
+$result = mysqli_query($conn, $sql);
+//fetch result as a string
+$locations = array();
+while($row = mysqli_fetch_assoc($result)) {
+    $locations[$row['location']] = ['lat' => $row['lat'], 'long' => $row['long']];
+}
+//free result from memory
+mysqli_free_result($result);
+
+
+
 // json encode the data array with hours and records as attendance
 $attendance = array(
     'hours' => $hours,
@@ -49,7 +63,8 @@ $attendance = array(
 //json encode the data array with patrols and attendance
 $data = array(
     'patrols' => $patrols,
-    'attendance' => $attendance
+    'attendance' => $attendance,
+    'locations' => $locations
 );
 
 echo json_encode($data);

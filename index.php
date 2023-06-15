@@ -17,6 +17,8 @@
     <link href="assets/css/icons.min.css" rel="stylesheet" type="text/css" />
     <!-- App Css-->
     <link href="assets/css/app.min.css" id="app-style" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js"></script>
 
     <style>
     body {
@@ -353,15 +355,15 @@
                                                             <h5 class="mb-0"><?php
                                                                                     //get time now
                                                                                     date_default_timezone_set(implode('', $timezone));
-                                                                                    $now = date('Y-m-d H:i:s');
+                                                        $now = date('Y-m-d H:i:s');
 
-                                                                                    // get difference between time now and time in
-                                                                                    $time1 = $record['time_in'] == null ? strtotime($now) : strtotime($record['time_in']);
-                                                                                    $time2 = $record['time_out'] == null ? strtotime($now) : strtotime($record['time_out']);
-                                                                                    $diff = $time2 - $time1;
-                                                                                    $hours = round($diff / (60 * 60), 2);
-                                                                                    echo $hours;
-                                                                                    ?></h5>
+                                                        // get difference between time now and time in
+                                                        $time1 = $record['time_in'] == null ? strtotime($now) : strtotime($record['time_in']);
+                                                        $time2 = $record['time_out'] == null ? strtotime($now) : strtotime($record['time_out']);
+                                                        $diff = $time2 - $time1;
+                                                        $hours = round($diff / (60 * 60), 2);
+                                                        echo $hours;
+                                                        ?></h5>
                                                         </td>
                                                         <td>
                                                             <div class="progress bg-transparent progress-sm">
@@ -384,6 +386,14 @@
                         </div>
                     </div>
                     <!-- end row -->
+
+
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div id="map" style="width: 100%; height: 30vh"></div>
+                        </div>
+
+                    </div>
 
                     <div class="row">
                         <div class="col-lg-12">
@@ -509,7 +519,6 @@
 
     <!-- Right bar overlay-->
     <div class="rightbar-overlay"></div>
-
     <!-- JAVASCRIPT -->
     <script src="assets/libs/jquery/jquery.min.js"></script>
     <script src="assets/libs/metismenu/metisMenu.min.js"></script>
@@ -1100,6 +1109,67 @@
         }
 
     }
+    </script>
+    <script>
+    //fetch data from api
+    $.ajax({
+        url: 'livepatrols.php',
+        type: 'GET',
+        dataType: 'json',
+        success: function(response) {
+            // update the markers array
+            let locations = response.locations;
+            //find the median of the latitudes and longitudes
+            let latitudes = [];
+            let longitudes = [];
+            for (var location in locations) {
+                if (locations.hasOwnProperty(location)) {
+                    latitudes.push(locations[location].lat);
+                    longitudes.push(locations[location].long);
+                }
+            }
+            let medianLatitude = latitudes.sort()[Math.floor(latitudes.length / 2)];
+            let medianLongitude = longitudes.sort()[Math.floor(longitudes.length / 2)];
+            let median = [medianLatitude, medianLongitude];
+
+
+
+            // map initialization
+            var map = L.map("map").setView(median, 30);
+
+            // add tile layer
+            L.tileLayer("https://mt0.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            }).addTo(map);
+
+            // add markers from the locations object
+            for (var location in locations) {
+                if (locations.hasOwnProperty(location)) {
+                    var lat = locations[location].lat;
+                    var lng = locations[location].long;
+                    var title = location;
+                    var marker = L.marker([lat, lng], {
+                        icon: L.icon({
+                            iconUrl: "https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
+                            iconSize: [20, 35],
+                            iconAnchor: [10, 35],
+                            popupAnchor: [1, -34],
+                            tooltipAnchor: [16, -28]
+                        })
+                    }).addTo(map);
+
+                    marker.bindPopup(title);
+                }
+            }
+
+            // add circle
+            var circle = L.circle([-1.2418831, 36.793715], {
+                color: 'green',
+                fillOpacity: 0.5,
+                radius: 100
+            }).addTo(map);
+        }
+    });
     </script>
 
 </body>
